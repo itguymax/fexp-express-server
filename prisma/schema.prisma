@@ -8,6 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 // User model
 model User {
   id            Int       @id @default(autoincrement())
@@ -24,6 +25,7 @@ model User {
   createdAt     DateTime?  @default(now())
   updatedAt     DateTime?  @updatedAt
   lastLogin     DateTime?
+  role  UserRole @default(USER)
 
   // Relationships
   listings      ExchangeListing[] // User can create multiple listings
@@ -35,6 +37,15 @@ model User {
   receivedTransactions Transaction[] @relation("Receiver")  // User is receiver in transactions
 }
 
+
+// Enum for user roles 
+enum UserRole {
+  USER
+  ADMIN
+  MODERATOR
+  KYC_AGENT
+  AGENT
+}
 // Enum for KYC status
 enum KycStatus {
   PENDING

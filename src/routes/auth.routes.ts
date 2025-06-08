@@ -189,15 +189,18 @@ router.post("/login", loginLimiter, validateUserLogin, AuthController.login);
  *                 email:
  *                   type: string
  *                   example: user@example.com
- *                 firstName:
+ *                 role:
  *                   type: string
- *                   example: John
- *                 lastName:
+ *                   example: USER
+ *                 name:
  *                   type: string
- *                   example: Doe
- *                 country:
+ *                   example: John Doe
+ *                 countryOfOrigin:
  *                   type: string
- *                   example: USA
+ *                   example: Cameroon
+ *                 countryOfResidence:
+ *                    type: string
+ *                    example: Russia
  *                 phoneNumber:
  *                   type: string
  *                   example: "+1234567890"

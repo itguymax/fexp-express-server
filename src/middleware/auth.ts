@@ -9,7 +9,12 @@ import { ApiError } from "../utils/errorHandler";
 declare global {
   namespace Express {
     interface Request {
-      user?: { id: number; uuid: string | null; email: string };
+      user?: {
+        id: number;
+        uuid: string | null;
+        email: string;
+        role: string;
+      };
     }
   }
 }
@@ -30,7 +35,7 @@ export const protect = async (
 
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { id: true, uuid: true, email: true }, // Select only necessary fields for req.user
+        select: { id: true, uuid: true, email: true, role: true }, // Select only necessary fields for req.user
       });
 
       if (!user) {
@@ -54,7 +59,18 @@ export const protect = async (
 export const authorizeRoles = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     // Implement role-based authorization here if you add roles to your User model
-    // For now, this is a placeholder
+    if (!req.user || !req.user.role) {
+      return next(new ApiError("Not authorized, user role not found", 403));
+    }
+    // check if user's role is included in the allowed roles for this route
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new ApiError(
+          `Role(${req.user.role}) is not authorized to access this resource`,
+          403
+        )
+      );
+    }
     next();
   };
 };
