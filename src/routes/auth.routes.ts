@@ -5,6 +5,7 @@ import {
   validateUserLogin,
   validateUserRegistration,
 } from "../middleware/validation";
+import { loginLimiter } from "../middleware/rateLimit";
 
 const router = Router();
 
@@ -161,7 +162,7 @@ router.post("/register", validateUserRegistration, AuthController.register);
  *       '500':
  *         description: Internal server error
  */
-router.post("/login", validateUserLogin, AuthController.login);
+router.post("/login", loginLimiter, validateUserLogin, AuthController.login);
 
 /**
  * @swagger

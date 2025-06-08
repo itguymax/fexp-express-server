@@ -3,7 +3,6 @@ import express from "express";
 import { config } from "./config";
 import { prisma } from "./database/prisma";
 import { errorHandler } from "./utils/errorHandler";
-import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import helmet from "helmet";
 
@@ -14,6 +13,8 @@ import listingsRoutes from "./routes/listings.routes";
 import matchesRoutes from "./routes/matches.routes";
 import transactionsRoutes from "./routes/transactions.routes";
 import { corsOptions, confCors } from "./config/cors";
+import { swaggerDocs } from "./config/swagger";
+import { apiLimiter } from "./middleware/rateLimit";
 
 const app = express();
 
@@ -23,48 +24,10 @@ app.use(confCors(corsOptions));
 app.use(helmet());
 app.use(express.json()); // Body parser for JSON requests
 
-// Swagger setup
-const swaggerOptions = {
-  swaggerDefinition: {
-    openapi: "3.0.0",
-    info: {
-      title: "FexP Express API MVP",
-      version: "1.0.0",
-      description:
-        "Minimal Viable Product API for peer-to-peer currency exchange built with Express.js and Prisma.",
-    },
-    servers: [
-      {
-        url: `http://localhost:${config.port}`,
-        description: "Local development server",
-      },
-      // Add production server URL here when deployed
-    ],
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: "http",
-          scheme: "bearer",
-          bearerFormat: "JWT",
-          description:
-            "Enter your JWT token in the format: `Bearer YOUR_TOKEN`",
-        },
-      },
-    },
-    // Global security for all routes (can be overridden per route)
-    security: [
-      {
-        bearerAuth: [],
-      },
-    ],
-  },
-  apis: ["./src/routes/*.ts"], // Path to the API route files (e.g., auth.routes.ts, users.routes.ts)
-};
-
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Routes
+app.use("api/v1", apiLimiter); // General API rate limit to non-auth routes (optional but good for DDoS)
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/listings", listingsRoutes);
