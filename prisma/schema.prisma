@@ -1,0 +1,150 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id            Int       @id @default(autoincrement())
+  uuid          String?    @unique @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  name String?
+  countryOfOrigin  String?
+  countryOfResidence String?
+  isStudent  Boolean?  @default(true)
+  phoneNumber   String?
+  agreeTerms Boolean?    @default(true)
+  kycStatus     KycStatus? @default(PENDING) // Enum for KYC verification
+  createdAt     DateTime?  @default(now())
+  updatedAt     DateTime?  @updatedAt
+  lastLogin     DateTime?
+
+  // Relationships
+  listings      ExchangeListing[] // User can create multiple listings
+  initiatedMatches Match[]          @relation("Initiator") // User initiates matches
+  receivedMatches  Match[]         @relation("Receiver")  // User receives match requests
+  sentMessages  Message[]        @relation("Sender")    // User sends messages
+  receivedMessages Message[]       @relation("Receiver")  // User receives messages
+  sentTransactions Transaction[]   @relation("Sender")    // User is sender in transactions
+  receivedTransactions Transaction[] @relation("Receiver")  // User is receiver in transactions
+}
+
+// Enum for KYC status
+enum KycStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+// Exchange Listing model
+model ExchangeListing {
+  id              Int        @id @default(autoincrement())
+  uuid            String     @unique @default(cuid())
+  userId          Int
+  user            User       @relation(fields: [userId], references: [id])
+  currencyFrom    String     // e.g., "USD"
+  currencyTo      String     // e.g., "EUR"
+  amountFrom      Float      // Amount of currencyFrom
+  amountTo        Float      // Amount of currencyTo
+  exchangeRate    Float      // Calculated rate
+  type            ListingType // BUY or SELL
+  status          ListingStatus @default(ACTIVE) // ACTIVE, FULFILLED, CANCELED
+  paymentMethod   String     // e.g., "Bank Transfer", "Mobile Money"
+  location        String?    // Optional: specific meeting location
+  description     String?    // Optional: additional details
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relationships
+  matches Match[] // A listing can have multiple matches
+}
+
+// Enum for Listing Type (BUY/SELL)
+enum ListingType {
+  BUY
+  SELL
+}
+
+// Enum for Listing Status
+enum ListingStatus {
+  ACTIVE
+  FULFILLED
+  CANCELED
+}
+
+// Match model (when a user expresses interest in a listing)
+model Match {
+  id                Int           @id @default(autoincrement())
+  uuid              String        @unique @default(cuid())
+  listingId         Int
+  listing           ExchangeListing @relation(fields: [listingId], references: [id])
+  initiatorUserId   Int           // User who initiated the match (expressed interest)
+  initiator         User          @relation("Initiator", fields: [initiatorUserId], references: [id])
+  receiverUserId    Int           // User who owns the listing
+  receiver          User          @relation("Receiver", fields: [receiverUserId], references: [id])
+  status            MatchStatus   @default(PENDING) // PENDING, ACCEPTED, REJECTED, CANCELED
+  amount            Float?        // Matched amount (if partial)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relationships
+  messages  Message[]     // Messages related to this match
+  transaction Transaction[] // A match can lead to a transaction
+}
+
+// Enum for Match Status
+enum MatchStatus {
+  PENDING    // Match initiated, waiting for owner's response
+  ACCEPTED   // Owner accepted the match
+  REJECTED   // Owner rejected the match
+  CANCELED   // Initiator or owner canceled the match
+}
+
+// Transaction model (after a match is accepted and funds are exchanged)
+model Transaction {
+  id               Int                @id @default(autoincrement())
+  uuid             String             @unique @default(cuid())
+  matchId          Int                @unique // One-to-one with Match
+  match            Match              @relation(fields: [matchId], references: [id])
+  senderUserId     Int
+  sender           User               @relation("Sender", fields: [senderUserId], references: [id])
+  receiverUserId   Int
+  receiver         User               @relation("Receiver", fields: [receiverUserId], references: [id])
+  amount           Float
+  currency         String
+  status           TransactionStatus  @default(INITIATED) // INITIATED, SENT_BY_SENDER, RECEIVED_BY_RECEIVER, COMPLETED, DISPUTED, CANCELED
+  proofOfPayment   String?            // Link to proof of payment (e.g., S3 URL)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+// Enum for Transaction Status
+enum TransactionStatus {
+  INITIATED
+  SENT_BY_SENDER
+  RECEIVED_BY_RECEIVER
+  COMPLETED
+  DISPUTED
+  CANCELED
+}
+
+// Message model (for in-app chat)
+model Message {
+  id          Int      @id @default(autoincrement())
+  uuid        String   @unique @default(cuid())
+  matchId     Int
+  match       Match    @relation(fields: [matchId], references: [id])
+  senderId    Int
+  sender      User     @relation("Sender", fields: [senderId], references: [id])
+  receiverId  Int
+  receiver    User     @relation("Receiver", fields: [receiverId], references: [id])
+  content     String
+  createdAt   DateTime @default(now())
+  readAt      DateTime? // When the message was read by the receiver
+}
