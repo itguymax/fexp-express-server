@@ -1,6 +1,7 @@
 import cors from "cors";
 const allowedOrigins = [
   "https://fexp-web-app.vercel.app", // Fexp dev frontend url
+  "http://localhost:3000",
 ];
 export const confCors = cors;
 export const corsOptions: cors.CorsOptions = {

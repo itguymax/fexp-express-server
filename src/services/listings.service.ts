@@ -2,9 +2,27 @@
 import { prisma } from "../database/prisma";
 import { ExchangeListing, ListingType, ListingStatus } from "@prisma/client";
 
+interface CreateListingInput {
+  userId: number;
+  type: ListingType;
+  currencyFrom: string;
+  currencyTo: string;
+  amountFrom: number;
+  amountTo: number;
+  paymentMethod: string;
+  description?: string;
+  location: string;
+}
+
+interface GetAllListingsParams {
+  page: number;
+  limit: number;
+  filters: { [key: string]: any; location?: string };
+  orderBy: { [key: string]: "asc" | "desc" };
+}
 export const ListingService = {
   create: async (
-    listingData: any,
+    listingData: CreateListingInput,
     userId: number
   ): Promise<ExchangeListing> => {
     return prisma.exchangeListing.create({
@@ -14,12 +32,21 @@ export const ListingService = {
         currencyTo: listingData.currencyTo,
         amountFrom: listingData.amountFrom,
         amountTo: listingData.amountTo,
-        exchangeRate: listingData.exchangeRate,
         type: listingData.type as ListingType, // Cast to enum type
         status: ListingStatus.ACTIVE,
         paymentMethod: listingData.paymentMethod,
         location: listingData.location,
         description: listingData.description,
+        exchangeRate: 10, // to be removed
+      },
+      include: {
+        user: {
+          select: {
+            uuid: true,
+            name: true,
+            countryOfResidence: true,
+          },
+        },
       },
     });
   },

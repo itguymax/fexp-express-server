@@ -11,6 +11,7 @@ export const config: {
   redisUrl: string;
   resetTokenExpiration: string;
   frontendUrl: string;
+  fexpResetPasswordUrl: string;
 } = (() => {
   // Basic validation
 
@@ -20,7 +21,8 @@ export const config: {
     !process.env.REDIS_URL ||
     !process.env.JWT_EXPIRATION_TIME ||
     !process.env.FRONTEND_URL ||
-    !process.env.RESET_TOKEN_EXPIRATION
+    !process.env.RESET_TOKEN_EXPIRATION ||
+    !process.env.FEXP_RESET_PASSWORD_URL
   ) {
     console.error("CRITICAL ERROR: Missing essential environment varialbles");
     process.exit(1);
@@ -36,5 +38,6 @@ export const config: {
     redisUrl: process.env.REDIS_URL,
     resetTokenExpiration: process.env.RESET_TOKEN_EXPIRATION,
     frontendUrl: process.env.FRONTEND_URL,
+    fexpResetPasswordUrl: process.env.FEXP_RESET_PASSWORD_URL,
   };
 })();

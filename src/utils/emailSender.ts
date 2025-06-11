@@ -10,7 +10,7 @@ export const EmailSender = {
     // For now, we'll just log the email content.
 
     const resetLink = `${
-      config.frontendUrl
+      config.fexpResetPasswordUrl
     }/reset-password?token=${resetToken}&email=${encodeURIComponent(toEmail)}`;
 
     console.log(`--- Sending Password Reset Email ---`);

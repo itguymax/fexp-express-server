@@ -64,14 +64,15 @@ model ExchangeListing {
   currencyTo      String     // e.g., "EUR"
   amountFrom      Float      // Amount of currencyFrom
   amountTo        Float      // Amount of currencyTo
-  exchangeRate    Float      // Calculated rate
+  exchangeRate    Float?    // Calculated rate
   type            ListingType // BUY or SELL
   status          ListingStatus @default(ACTIVE) // ACTIVE, FULFILLED, CANCELED
   paymentMethod   String     // e.g., "Bank Transfer", "Mobile Money"
-  location        String?    // Optional: specific meeting location
+  location        String?    // Optional: authenticated user's country of residence
   description     String?    // Optional: additional details
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+  
 
   // Relationships
   matches Match[] // A listing can have multiple matches

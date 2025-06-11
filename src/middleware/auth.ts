@@ -14,6 +14,7 @@ declare global {
         uuid: string | null;
         email: string;
         role: string;
+        countryOfResidence: string | null;
       };
     }
   }
@@ -25,17 +26,30 @@ export const protect = async (
   next: NextFunction
 ) => {
   let token;
+  console.log("-- JWT Protect Middleware Debugging ---");
+  console.log("Authorization Header:", req.headers.authorization);
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
   ) {
     try {
+      console.log("Header checked");
       token = req.headers.authorization.split(" ")[1];
+      console.log("HEader Token extraction", token);
+      console.log("Type of token extracted", typeof token, token?.length);
+      console.log("JWT SECRET", config.jwtSecret, config.jwtExpirationTime);
+      console.log("JWT SECRET type", typeof config.jwtSecret, config.jwtSecret);
       const decoded: any = jwt.verify(token, config.jwtSecret);
-
+      console.log("decoded token", decoded);
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { id: true, uuid: true, email: true, role: true }, // Select only necessary fields for req.user
+        select: {
+          id: true,
+          uuid: true,
+          email: true,
+          role: true,
+          countryOfResidence: true,
+        }, // Select only necessary fields for req.user
       });
 
       if (!user) {
