@@ -24,7 +24,11 @@ app.use(confCors(corsOptions));
 app.use(helmet());
 app.use(express.json()); // Body parser for JSON requests
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocs, { explorer: true })
+);
 
 // Routes
 app.use("api/v1", apiLimiter); // General API rate limit to non-auth routes (optional but good for DDoS)

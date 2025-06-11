@@ -35,6 +35,7 @@ model User {
   receivedMessages Message[]       @relation("Receiver")  // User receives messages
   sentTransactions Transaction[]   @relation("Sender")    // User is sender in transactions
   receivedTransactions Transaction[] @relation("Receiver")  // User is receiver in transactions
+  passwordResetTokens   PasswordResetToken[] // Auser can have many password reset token
 }
 
 
@@ -158,4 +159,15 @@ model Message {
   content     String
   createdAt   DateTime @default(now())
   readAt      DateTime? // When the message was read by the receiver
+}
+
+model PasswordResetToken {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String      @unique // hashed token to prevent exposure if DB is compromised
+  expiresAt   DateTime
+  createdAt   DateTime    @default(now())
+  used        Boolean     @default(false)  // To mark token as used after successful reset
+  @@index([token])  /// Index for faster lookups
 }

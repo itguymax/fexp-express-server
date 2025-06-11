@@ -42,6 +42,14 @@ export const UserService = {
       data: { lastLogin: new Date() },
     });
   },
-
+  updatePassword: async (
+    userId: number,
+    newPasswordHash: string
+  ): Promise<User> => {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newPasswordHash },
+    });
+  },
   // TODO: Add more CRUD operations for users (e.g., update profile, delete)
 };

@@ -61,3 +61,19 @@ export const validateListingCreation = [
   body("paymentMethod").notEmpty().withMessage("Payment method is required"),
   handleValidationErrors,
 ];
+
+// Validation for forgot password request
+export const validateForgotPassword = [
+  body("email").isEmail().withMessage("Please enter a valid email address"),
+  handleValidationErrors,
+];
+
+// Validation for reset password request
+export const validateResetPassword = [
+  body("token").notEmpty().withMessage("Reset token is required"),
+  body("email").isEmail().withMessage("Please enter a valid email address"),
+  body("newPassword")
+    .isLength({ min: 6 })
+    .withMessage("New password must be at least 6 characters long"),
+  handleValidationErrors,
+];

@@ -4,6 +4,8 @@ import { protect } from "../middleware/auth";
 import {
   validateUserLogin,
   validateUserRegistration,
+  validateForgotPassword,
+  validateResetPassword,
 } from "../middleware/validation";
 import { loginLimiter } from "../middleware/rateLimit";
 
@@ -226,4 +228,101 @@ router.post("/login", loginLimiter, validateUserLogin, AuthController.login);
  */
 router.get("/profile", protect, AuthController.getProfile);
 
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     summary: Log out a user and blacklist their JWT
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: User logged out successfully
+ *       '400':
+ *         description: No token provided or invalid token
+ *       '401':
+ *         description: Not authorized
+ */
+router.post("/logout", protect, AuthController.logout);
+
+/**
+ * @swagger
+ * /api/v1/auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       '200':
+ *         description: If a matching account is found, a password reset email will be sent. (Always returns 200 for security)
+ *       '400':
+ *         description: Invalid email format
+ *       '500':
+ *         description: Internal server error
+ */
+
+router.post(
+  "/forgot-password",
+  validateForgotPassword,
+  AuthController.forgotPassword as any
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/reset-password:
+ *   post:
+ *     summary: Reset user password using a token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - email
+ *               - newPassword
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: The password reset token received via email
+ *                 example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 6
+ *                 example: MyNewSecurePassword!
+ *     responses:
+ *       '200':
+ *         description: Password has been reset successfully.
+ *       '400':
+ *         description: Invalid or expired password reset token, or invalid input
+ *       '404':
+ *         description: User not found
+ *       '500':
+ *         description: Internal server error
+ */
+router.post(
+  "/reset-password",
+  validateResetPassword,
+  AuthController.resetPassword
+);
 export default router;
