@@ -152,7 +152,7 @@ router.post(
  *       '500':
  *         description: Internal server error
  */
-router.get("/", protect, ListingController.getAllListings);
+router.get("/", protect, ListingController.getMatchingListings);
 
 /**
  * @swagger
@@ -175,6 +175,6 @@ router.get("/", protect, ListingController.getAllListings);
  *       '500':
  *         description: Internal server error
  */
-router.get("/:id", protect, ListingController.getListingById);
+router.get("/:uuid", protect, ListingController.getListingByUuid);
 
 export default router;

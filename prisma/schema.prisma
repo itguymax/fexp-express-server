@@ -26,6 +26,9 @@ model User {
   updatedAt     DateTime?  @updatedAt
   lastLogin     DateTime?
   role  UserRole @default(USER)
+  profilePicture  String?
+  emailVerified   Boolean   @default(false)
+  isSuspended     Boolean   @default(false)
 
   // Relationships
   listings      ExchangeListing[] // User can create multiple listings
@@ -64,7 +67,6 @@ model ExchangeListing {
   currencyTo      String     // e.g., "EUR"
   amountFrom      Float      // Amount of currencyFrom
   amountTo        Float      // Amount of currencyTo
-  exchangeRate    Float?    // Calculated rate
   type            ListingType // BUY or SELL
   status          ListingStatus @default(ACTIVE) // ACTIVE, FULFILLED, CANCELED
   paymentMethod   String     // e.g., "Bank Transfer", "Mobile Money"
@@ -72,10 +74,18 @@ model ExchangeListing {
   description     String?    // Optional: additional details
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+  expiresAt       DateTime   // when the listing automatically expires
   
 
   // Relationships
   matches Match[] // A listing can have multiple matches
+
+  @@index([userId])
+  @@index([amountFrom])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@index([expiresAt])  // Important for querying active/expired listings
 }
 
 // Enum for Listing Type (BUY/SELL)
@@ -86,9 +96,12 @@ enum ListingType {
 
 // Enum for Listing Status
 enum ListingStatus {
-  ACTIVE
-  FULFILLED
-  CANCELED
+  ACTIVE            // Visible and available for matching
+  COMPLETED         // Exchange successfully finished
+  CANCELED          // Listing was canceled by user
+  PENDING           // For internal use, if a match is pending acceptance
+  EXPIRED           // Listing passed its expiresAt date
+  DISPUTE           //  Listing is under investigation or fraud
 }
 
 // Match model (when a user expresses interest in a listing)
