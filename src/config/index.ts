@@ -32,7 +32,7 @@ export const config: {
     port: process.env.PORT || 5000,
     databaseUrl: process.env.DATABASE_URL!,
     jwtSecret: process.env.JWT_SECRET,
-    jwtExpirationTime: process.env.JWT_EXPIRATION_TIME ?? "1h",
+    jwtExpirationTime: process.env.JWT_EXPIRATION_TIME ?? "10h",
     saltRounds: 10, // for bcrypt, more for production,
     jwtIssuer: process.env.OWNER,
     redisUrl: process.env.REDIS_URL,

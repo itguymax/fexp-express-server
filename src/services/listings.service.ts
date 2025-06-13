@@ -53,6 +53,7 @@ export const ListingService = {
             uuid: true,
             name: true,
             countryOfResidence: true,
+            countryOfOrigin: true,
           },
         },
       },
@@ -86,6 +87,11 @@ export const ListingService = {
         type: true,
         currencyFrom: true,
         currencyTo: true,
+        user: {
+          select: {
+            countryOfOrigin: true,
+          },
+        },
       },
     });
     if (userActiveListings.length === 0) {
@@ -108,6 +114,10 @@ export const ListingService = {
           ? userListing.currencyFrom
           : userListing.currencyTo,
       user: {
+        countryOfOrigin: userListing.user.countryOfOrigin,
+        countryOfResidence: userCountryOfResidence,
+      },
+      userId: {
         not: userId, // Exlude listings created by the current user
       },
       status: ListingStatus.ACTIVE,
