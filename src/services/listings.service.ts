@@ -105,14 +105,8 @@ export const ListingService = {
         userListing.type === ListingType.SELL
           ? ListingType.BUY
           : ListingType.SELL,
-      currencyFrom:
-        userListing.type === ListingType.SELL
-          ? userListing.currencyTo
-          : userListing.currencyFrom,
-      currencyTo:
-        userListing.type === ListingType.SELL
-          ? userListing.currencyFrom
-          : userListing.currencyTo,
+      currencyFrom: userListing.currencyTo,
+      currencyTo: userListing.currencyFrom,
       user: {
         countryOfOrigin: userListing.user.countryOfOrigin,
         countryOfResidence: userCountryOfResidence,
@@ -125,8 +119,10 @@ export const ListingService = {
     }));
     // if there is no match conditions, prevent empty OR clause
     if (matchConditions.length === 0) {
+      console.log("no match conditions", matchConditions);
       return { listings: [], totalListings: 0 };
     }
+    console.log("we have match conditions here", matchConditions);
     const listings = await prisma.exchangeListing.findMany({
       where: {
         OR: matchConditions,
@@ -146,6 +142,8 @@ export const ListingService = {
         },
       },
     });
+
+    console.log("Listing after OR", listings);
     const totalListings = await prisma.exchangeListing.count({
       where: {
         OR: matchConditions,
