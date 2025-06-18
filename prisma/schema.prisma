@@ -32,13 +32,17 @@ model User {
 
   // Relationships
   listings      ExchangeListing[] // User can create multiple listings
-  initiatedMatches Match[]          @relation("Initiator") // User initiates matches
+  initiatedMatches Match[]          @relation("InitiatedMatches") // User initiates matches
   receivedMatches  Match[]         @relation("Receiver")  // User receives match requests
   sentMessages  Message[]        @relation("Sender")    // User sends messages
   receivedMessages Message[]       @relation("Receiver")  // User receives messages
-  sentTransactions Transaction[]   @relation("Sender")    // User is sender in transactions
-  receivedTransactions Transaction[] @relation("Receiver")  // User is receiver in transactions
+ // sentTransactions Transaction[]   @relation("Sender")    // User is sender in transactions
+  //receivedTransactions Transaction[] @relation("Receiver")  // User is receiver in transactions
   passwordResetTokens   PasswordResetToken[] // Auser can have many password reset token
+
+  @@index([countryOfResidence])
+  @@index([countryOfOrigin])
+  @@index([email])
 }
 
 
@@ -78,7 +82,8 @@ model ExchangeListing {
   
 
   // Relationships
-  matches Match[] // A listing can have multiple matches
+  initiatedMatches Match[]  @relation("InitiatorMatchListings")// A listing can have multiple matches
+  matchedByMatches Match[]  @relation("MatchedListings")
 
   @@index([userId])
   @@index([amountFrom])
@@ -104,51 +109,84 @@ enum ListingStatus {
   DISPUTE           //  Listing is under investigation or fraud
 }
 
-// Match model (when a user expresses interest in a listing)
+
 model Match {
   id                Int           @id @default(autoincrement())
   uuid              String        @unique @default(cuid())
-  listingId         Int
-  listing           ExchangeListing @relation(fields: [listingId], references: [id])
-  initiatorUserId   Int           // User who initiated the match (expressed interest)
-  initiator         User          @relation("Initiator", fields: [initiatorUserId], references: [id])
-  receiverUserId    Int           // User who owns the listing
-  receiver          User          @relation("Receiver", fields: [receiverUserId], references: [id])
+
+ // the listing created by the initiator
+  initiatorListingId         Int
+  initiatorListing           ExchangeListing @relation("InitiatorMatchListings",fields: [initiatorListingId], references: [id])
+
+   // The user who initiated the match proposal
+  initiatorId   Int           // User who initiated the match (expressed interest)
+  initiator         User          @relation("InitiatedMatches", fields: [initiatorId], references: [id])
+
+  //  The listing that the initiator proposed to match with (owned by  the other user)
+  matchedListingId    Int
+  matchedListing      ExchangeListing    @relation("MatchedListings", fields:[matchedListingId], references:[id])
+
+
+  receiverUserId    Int?           // User who owns the listing
+  receiver          User?          @relation("Receiver", fields: [receiverUserId], references: [id])
+
+
+  // Current status of the match 
   status            MatchStatus   @default(PENDING) // PENDING, ACCEPTED, REJECTED, CANCELED
+
+
   amount            Float?        // Matched amount (if partial)
+
+
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
   // Relationships
   messages  Message[]     // Messages related to this match
-  transaction Transaction[] // A match can lead to a transaction
+  //transaction Transaction[] // A match can lead to a transaction
+
+  // Optional: for multi-party confirmation of completion (e.g., both sides click "confirm")
+  // we might add a confirmation field or separate completion table later 
+  // For MVP, we can assume one party marking completed is enough to transition to COMPLETED,
+  // with DISPUTED status handling discrepancies
+
+  initiatorConfirmedCompletion  Boolean @default(false)
+  matchedConfirmedCompletion    Boolean @default(false)
+
+  @@index([initiatorId])
+  @@index([initiatorListingId])
+  @@index([matchedListingId])
+  @@index([status])
 }
 
 // Enum for Match Status
 enum MatchStatus {
-  PENDING    // Match initiated, waiting for owner's response
-  ACCEPTED   // Owner accepted the match
-  REJECTED   // Owner rejected the match
-  CANCELED   // Initiator or owner canceled the match
+  PENDING    // Proposed by one user, awaiting acceptance from the other
+  ACCEPTED   // Both parties agree, in-chat communication enabled
+  COMPLETED  // Exhange successfully finished and confirmed by both parties  
+  REJECTED   // A pending match proposal was explicitly rejected
+  CANCELED   // Match canceled by one or both parties before completion
+  DISPUTED  // Match is under active dispute or investigation
+
 }
 
 // Transaction model (after a match is accepted and funds are exchanged)
-model Transaction {
-  id               Int                @id @default(autoincrement())
-  uuid             String             @unique @default(cuid())
-  matchId          Int                @unique // One-to-one with Match
-  match            Match              @relation(fields: [matchId], references: [id])
-  senderUserId     Int
-  sender           User               @relation("Sender", fields: [senderUserId], references: [id])
-  receiverUserId   Int
-  receiver         User               @relation("Receiver", fields: [receiverUserId], references: [id])
-  amount           Float
-  currency         String
-  status           TransactionStatus  @default(INITIATED) // INITIATED, SENT_BY_SENDER, RECEIVED_BY_RECEIVER, COMPLETED, DISPUTED, CANCELED
-  proofOfPayment   String?            // Link to proof of payment (e.g., S3 URL)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-}
+//model Transaction {
+//  id               Int                @id @default(autoincrement())
+//  uuid             String             @unique @default(cuid())
+//  matchId          Int                @unique // One-to-one with Match
+//  match            Match              @relation(fields: [matchId], references: [id])
+//  senderUserId     Int
+//  sender           User               @relation("Sender", fields: [senderUserId], references: [id])
+//  receiverUserId   Int
+//  receiver         User               @relation("Receiver", fields: [receiverUserId], references: [id])
+//  amount           Float
+//  currency         String
+//  status           TransactionStatus  @default(INITIATED) // INITIATED, SENT_BY_SENDER, RECEIVED_BY_RECEIVER, COMPLETED, DISPUTED, CANCELED
+//  proofOfPayment   String?            // Link to proof of payment (e.g., S3 URL)
+//  createdAt        DateTime           @default(now())
+//  updatedAt        DateTime           @updatedAt
+//}
 
 // Enum for Transaction Status
 enum TransactionStatus {
@@ -173,6 +211,11 @@ model Message {
   content     String
   createdAt   DateTime @default(now())
   readAt      DateTime? // When the message was read by the receiver
+  isRead Boolean @default(false)
+
+  @@index([matchId])
+  @@index([senderId])
+  @@index([createdAt])
 }
 
 model PasswordResetToken {
