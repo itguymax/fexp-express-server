@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { TransactionController } from "../controllers/transactions.controller";
+// import { TransactionController } from "../controllers/transactions.controller";
 import { protect } from "../middleware/auth";
 
 const router = Router();
@@ -53,7 +53,7 @@ const router = Router();
  *       '500':
  *         description: Internal server error
  */
-router.post("/", protect, TransactionController.initiateTransaction);
+// router.post("/", protect, TransactionController.initiateTransaction);
 
 /**
  * @swagger
@@ -95,7 +95,7 @@ router.post("/", protect, TransactionController.initiateTransaction);
  *       '500':
  *         description: Internal server error
  */
-router.put("/:id/mark-sent", protect, TransactionController.markSent);
+// router.put("/:id/mark-sent", protect, TransactionController.markSent);
 
 /**
  * @swagger
@@ -125,6 +125,6 @@ router.put("/:id/mark-sent", protect, TransactionController.markSent);
  *       '500':
  *         description: Internal server error
  */
-router.put("/:id/mark-received", protect, TransactionController.markReceived);
+// router.put("/:id/mark-received", protect, TransactionController.markReceived);
 
 export default router;

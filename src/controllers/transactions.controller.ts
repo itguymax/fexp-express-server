@@ -10,44 +10,40 @@ export const TransactionController = {
     res: Response,
     next: NextFunction
   ) => {
-    try {
-      if (!req.user) return next(new ApiError("Authentication required", 401));
-      const { matchId, amount, currency } = req.body;
-
-      const match = await MatchService.findById(matchId);
-      if (!match) return next(new ApiError("Match not found", 404));
-
-      // Basic authorization: ensure current user is part of the match
-      if (
-        req.user.id !== match.initiatorUserId &&
-        req.user.id !== match.receiverUserId
-      ) {
-        return next(
-          new ApiError(
-            "Not authorized to initiate transaction for this match",
-            403
-          )
-        );
-      }
-
-      // Determine sender/receiver based on match roles
-      const senderId = req.user.id;
-      const receiverId =
-        senderId === match.initiatorUserId
-          ? match.receiverUserId
-          : match.initiatorUserId;
-
-      const newTransaction = await TransactionService.create(
-        matchId,
-        senderId,
-        receiverId,
-        amount,
-        currency
-      );
-      res.status(201).json(newTransaction);
-    } catch (error) {
-      next(error);
-    }
+    // try {
+    //   if (!req.user) return next(new ApiError("Authentication required", 401));
+    //   const { matchId, amount, currency } = req.body;
+    //   const match = await MatchService.findById(matchId);
+    //   if (!match) return next(new ApiError("Match not found", 404));
+    //   // Basic authorization: ensure current user is part of the match
+    //   if (
+    //     req.user.id !== match.initiatorUserId &&
+    //     req.user.id !== match.receiverUserId
+    //   ) {
+    //     return next(
+    //       new ApiError(
+    //         "Not authorized to initiate transaction for this match",
+    //         403
+    //       )
+    //     );
+    //   }
+    //   // Determine sender/receiver based on match roles
+    //   const senderId = req.user.id;
+    //   const receiverId =
+    //     senderId === match.initiatorUserId
+    //       ? match.receiverUserId
+    //       : match.initiatorUserId;
+    //   const newTransaction = await TransactionService.create(
+    //     matchId,
+    //     senderId,
+    //     receiverId,
+    //     amount,
+    //     currency
+    //   );
+    //   res.status(201).json(newTransaction);
+    // } catch (error) {
+    //   next(error);
+    // }
   },
 
   markSent: async (req: Request, res: Response, next: NextFunction) => {

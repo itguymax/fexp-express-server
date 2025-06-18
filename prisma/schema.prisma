@@ -30,6 +30,17 @@ model User {
   emailVerified   Boolean   @default(false)
   isSuspended     Boolean   @default(false)
 
+  // -----   Referal &  Early Believer fields
+
+  referralCode    String?    @unique  @default(cuid())
+  referredById    Int?     // ID of the user who  referred this user
+  referredBy     User?   @relation("UserReferrals",fields: [referredById],references: [id])
+  referredUsers     User[]    @relation("UserReferrals")  // List of users this user referred 
+  referredUserCount   Int?    @default(0)
+  isEarlyBeliever     Boolean?     @default(false)  // badge/status for Early adopters
+
+
+
   // Relationships
   listings      ExchangeListing[] // User can create multiple listings
   initiatedMatches Match[]          @relation("InitiatedMatches") // User initiates matches
@@ -43,6 +54,8 @@ model User {
   @@index([countryOfResidence])
   @@index([countryOfOrigin])
   @@index([email])
+  @@index([referralCode])
+  @@index(referredById)
 }
 
 

@@ -174,12 +174,12 @@ export const ListingService = {
             countryOfOrigin: true,
           },
         },
-        matches: {
-          select: {
-            uuid: true,
-            status: true,
-          },
-        },
+        // matches: {
+        //   select: {
+        //     uuid: true,
+        //     status: true,
+        //   },
+        // },
       },
     });
     return listing;
