@@ -8,6 +8,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// universal Rating Model 
+model UserRating {
+  id        Int      @id @default(autoincrement())
+  uuid      String   @unique @default(cuid())
+  raterId   Int
+  rater     User     @relation("GivenRatings", fields: [raterId], references: [id]) // User who gave the rating
+  ratedId   Int
+  rated     User     @relation("ReceivedRatings", fields: [ratedId], references: [id]) // User who received the rating
+  matchId   Int      @unique // A rating is strictly specific to one match
+  match     Match    @relation(fields: [matchId], references: [id])
+  rating    Int      // Rating value, e.g., 1-5
+  review    String?  // Optional text review
+  createdAt DateTime @default(now())
+
+  @@unique([raterId, matchId]) // A user can only rate another user once per match
+  @@index([ratedId]) // Index for retrieving all ratings for a user
+  @@index([matchId]) // Index for linking to specific matches
+}
 
 // User model
 model User {
@@ -20,8 +38,12 @@ model User {
   countryOfResidence String?
   isStudent  Boolean?  @default(true)
   phoneNumber   String?
+  averageRating     Decimal?   @db.Decimal(3,2) // Average rating as a decimal 
+  giventRatings     UserRating[]  @relation("GivenRatings")
+  receivedRatings   UserRating[]  @relation("ReceivedRatings")
   agreeTerms Boolean?    @default(true)
   kycStatus     KycStatus? @default(PENDING) // Enum for KYC verification
+  isVerified    Boolean?   @default(false)
   createdAt     DateTime?  @default(now())
   updatedAt     DateTime?  @updatedAt
   lastLogin     DateTime?
@@ -38,8 +60,6 @@ model User {
   referredUsers     User[]    @relation("UserReferrals")  // List of users this user referred 
   referredUserCount   Int?    @default(0)
   isEarlyBeliever     Boolean?     @default(false)  // badge/status for Early adopters
-
-
 
   // Relationships
   listings      ExchangeListing[] // User can create multiple listings
@@ -157,6 +177,8 @@ model Match {
   // Relationships
   messages  Message[]     // Messages related to this match
   //transaction Transaction[] // A match can lead to a transaction
+
+  ratings     UserRating[]
 
   // Optional: for multi-party confirmation of completion (e.g., both sides click "confirm")
   // we might add a confirmation field or separate completion table later 
